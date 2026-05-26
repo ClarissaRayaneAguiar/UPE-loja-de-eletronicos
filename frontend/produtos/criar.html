@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPE Loja de Eletrônicos - Novo Produto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #FFFFFF; font-family: sans-serif; }
+        .custom-navbar { background-color: #003399; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { color: #FFFFFF !important; font-weight: 700; }
+        .nav-link { color: rgba(255, 255, 255, 0.8) !important; font-weight: 500; }
+        .nav-link.active { color: #FFFFFF !important; border-bottom: 2px solid #CC0000; }
+        .form-card { border: none; border-radius: 8px; }
+        .form-label { color: #003399; font-weight: 600; }
+        .form-control:focus, .form-select:focus { border-color: #CC0000; box-shadow: 0 0 0 0.25rem rgba(204, 0, 0, 0.1); }
+        .btn-upe-primary { background-color: #CC0000; color: #FFFFFF; border: none; font-weight: 600; }
+        .btn-upe-primary:hover { background-color: #a30000; color: #FFFFFF; }
+        .btn-upe-secondary { background-color: #6c757d; color: #FFFFFF; border: none; font-weight: 600; }
+        .btn-upe-secondary:hover { background-color: #5a6268; color: #FFFFFF; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-5">
+        <div class="container">
+            <a class="navbar-brand" href="#">UPE LOJA DE ELETRÔNICOS</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="../categorias/index.html">Categorias</a>
+                <a class="nav-link active" href="../produtos/index.html">Produtos</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div id="mensagem-erro" class="alert alert-danger d-none shadow-sm mb-3" role="alert"></div>
+                <div class="card form-card shadow">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4 fw-bold text-center" style="color: #003399;">Cadastrar Novo Produto</h4>
+                        <form id="form-criar">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome do Produto</label>
+                                <input type="text" class="form-control" id="nome" placeholder="Ex: SSD NVMe 1TB" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="categoria_id" class="form-label">Categoria do Produto</label>
+                                <select class="form-select" id="categoria_id" required>
+                                    <option value="" selected disabled>Carregando categorias...</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="preco" class="form-label">Preço (R$)</label>
+                                <input type="text" class="form-control" id="preco" placeholder="450.00" autocomplete="off" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="descricao" class="form-label">Descrição Técnica</label>
+                                <textarea class="form-control" id="descricao" rows="3" placeholder="Insira as especificações técnicas..."></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <a href="index.html" class="btn btn-upe-secondary px-4">Voltar</a>
+                                <button type="submit" class="btn btn-upe-primary px-4">Salvar Produto</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        const API_PRODUTOS = "http://127.0.0.1:8000/produtos";
+        const API_CATEGORIAS = "http://127.0.0.1:8000/categorias";
+
+        $(document).ready(function() {
+            $.ajax({
+                url: API_CATEGORIAS,
+                type: 'GET',
+                success: function(categorias) {
+                    let options = '<option value="" selected disabled>Selecione a categoria</option>';
+                    $.each(categorias, function(index, cat) {
+                        options += `<option value="${cat.id}">ID ${cat.id} - ${cat.nome}</option>`;
+                    });
+                    $('#categoria_id').html(options);
+                },
+                error: function() {
+                    $('#mensagem-erro').text("⚠️ Não foi possível carregar a lista de categorias do banco de dados.").removeClass('d-none');
+                    $('#categoria_id').html('<option value="">Erro ao carregar categorias</option>');
+                }
+            });
+
+            $('#preco').on('keypress', function(e) {
+                const charCode = (e.which) ? e.which : e.keyCode;
+                if (charCode !== 46 && charCode !== 44 && charCode > 31 && (charCode < 48 || charCode > 57)) {
+                    e.preventDefault();
+                }
+                if ((charCode === 46 || charCode === 44) && ($(this).val().indexOf('.') !== -1 || $(this).val().indexOf(',') !== -1)) {
+                    e.preventDefault();
+                }
+            });
+
+            $('#preco').on('blur', function() {
+                let valor = $(this).val().trim();
+                if (valor === '') return;
+                valor = valor.replace(',', '.');
+                let numero = parseFloat(valor);
+                if (!isNaN(numero) && numero > 0) {
+                    $(this).val(numero.toString());
+                }
+            });
+        });
+
+        $('#form-criar').on('submit', function(e) {
+            e.preventDefault();
+            
+            const inputPreco = $('#preco').val().replace(',', '.');
+            const precoFormatado = parseFloat(inputPreco);
+
+            if (!inputPreco || isNaN(precoFormatado) || precoFormatado <= 0) {
+                $('#mensagem-erro').text("⚠️ Preço inválido! O valor deve ser maior que zero (Ex: 0.50 ou 125.00).").removeClass('d-none');
+                return; 
+            }
+
+            const dados = {
+                nome: $('#nome').val(),
+                categoria_id: parseInt($('#categoria_id').val()),
+                preco: precoFormatado,
+                descricao: $('#descricao').val()
+            };
+
+            $.ajax({
+                url: API_PRODUTOS,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(dados),
+                success: function() { window.location.href = "index.html"; },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        $('#mensagem-erro').text("⚠️ Erro 422: Dados inválidos ou campos obrigatórios não preenchidos.").removeClass('d-none');
+                    } else {
+                        $('#mensagem-erro').text("⚠️ Erro ao salvar produto. Verifique sua conexão com a API.").removeClass('d-none');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
