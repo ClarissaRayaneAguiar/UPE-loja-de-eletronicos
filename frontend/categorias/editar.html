@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPE Loja de Eletrônicos - Editar Categoria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FFFFFF;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .custom-navbar {
+            background-color: #003399;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: #FFFFFF !important;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 500;
+        }
+        .nav-link.active {
+            color: #FFFFFF !important;
+            border-bottom: 2px solid #CC0000;
+        }
+        .form-card {
+            border: none;
+            border-radius: 8px;
+        }
+        .form-label {
+            color: #003399;
+            font-weight: 600;
+        }
+        .form-control:focus {
+            border-color: #CC0000;
+            box-shadow: 0 0 0 0.25rem rgba(204, 0, 0, 0.1);
+        }
+        .btn-upe-primary {
+            background-color: #CC0000;
+            color: #FFFFFF;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-upe-primary:hover {
+            background-color: #a30000;
+            color: #FFFFFF;
+        }
+        .btn-upe-secondary {
+            background-color: #6c757d;
+            color: #FFFFFF;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-upe-secondary:hover {
+            background-color: #5a6268;
+            color: #FFFFFF;
+        }
+        .btn-sair {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.5);
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+        .btn-sair:hover {
+            background-color: #CC0000;
+            border-color: #CC0000;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-5">
+        <div class="container">
+            <a class="navbar-brand" href="#">UPE LOJA DE ELETRÔNICOS</a>
+            <div class="navbar-nav ms-auto align-items-center">
+                <span class="text-white me-3" id="usuario-logado"></span>
+                <a class="nav-link active" href="index.html">Categorias</a>
+                <a class="nav-link" href="../produtos/index.html">Produtos</a>
+                <button class="btn btn-sair btn-sm ms-2" id="btn-sair">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card form-card shadow">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4 fw-bold text-center" style="color: #003399;">
+                            Editar Categoria
+                        </h4>
+                        <form id="form-editar">
+                            <div class="mb-4">
+                                <label for="nome" class="form-label">Nome da Categoria</label>
+                                <input type="text" class="form-control form-control-lg" id="nome" required>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <a href="index.html" class="btn btn-upe-secondary px-4">Voltar</a>
+                                <button type="submit" class="btn btn-upe-primary px-4">Atualizar Categoria</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmacaoEdicao" tabindex="-1" aria-labelledby="modalConfirmacaoEdicaoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalConfirmacaoEdicaoLabel" style="color: #003399;">Confirmar Alteração</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="textoModalConfirmacaoEdicao"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-upe-primary" id="btnConfirmarEdicao">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        <div id="liveToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMensagem">
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const API_URL = "https://upe-loja-eletronicos.onrender.com/categorias";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoriaId = urlParams.get('id');
+
+        function mostrarToast(mensagem, variante) {
+            const toastElement = $('#liveToast');
+            const toastCorpo = $('#toastMensagem');
+            toastElement.removeClass('bg-success bg-danger bg-warning bg-info').addClass(`bg-${variante}`);
+            toastCorpo.text(mensagem);
+            const bsToast = new bootstrap.Toast(toastElement[0]);
+            bsToast.show();
+        }
+
+        $(document).ready(function() {
+
+            if (!localStorage.getItem('token')) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            $('#usuario-logado').text(localStorage.getItem('usuario_nome') || 'Usuário');
+
+            $('#btn-sair').on('click', function() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario_nome');
+                localStorage.removeItem('usuario_email');
+                window.location.href = '../login.html';
+            });
+
+            if (!categoriaId) {
+                mostrarToast("⚠️ Erro: Nenhuma categoria foi selecionada.", "danger");
+                return;
+            }
+
+            $.ajax({
+                url: `${API_URL}/${categoriaId}`,
+                type: 'GET',
+                success: function(cat) {
+                    $('#nome').val(cat.nome);
+                },
+                error: function(xhr) {
+                    if (xhr.status === 404) {
+                        mostrarToast("⚠️ Erro 404: Categoria não encontrada no sistema.", "danger");
+                    } else {
+                        mostrarToast("⚠️ Erro ao carregar os dados. Verifique se o Back-end está rodando.", "danger");
+                    }
+                }
+            });
+        });
+
+        $('#form-editar').on('submit', function(e) {
+            e.preventDefault();
+
+            const novoNome = $('#nome').val().trim();
+
+            $('#textoModalConfirmacaoEdicao').text(`Tem certeza que deseja salvar e alterar o nome desta categoria para "${novoNome}"?`);
+
+            $('#btnConfirmarEdicao').off('click').on('click', function() {
+                $('#modalConfirmacaoEdicao').modal('hide');
+
+                $.ajax({
+                    url: `${API_URL}/${categoriaId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    data: JSON.stringify({
+                        nome: novoNome
+                    }),
+                    success: function() {
+                        localStorage.setItem('toast_sucesso', `A categoria foi alterada para "${novoNome}" com sucesso!`);
+                        window.location.href = "index.html";
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            mostrarToast("⚠️ Sessão expirada. Redirecionando para a página de login...", "warning");
+                            setTimeout(function() {
+                                window.location.href = '../login.html';
+                            }, 3000);
+                        } else if (xhr.status === 422) {
+                            mostrarToast("⚠️ Erro 422: Dados inválidos. O campo não pode ser vazio.", "danger");
+                        } else if (xhr.status === 404) {
+                            mostrarToast("⚠️ Erro 404: Esta categoria não existe ou foi removida.", "danger");
+                        } else {
+                            mostrarToast("⚠️ Erro ao atualizar. Falha na comunicação com o servidor.", "danger");
+                        }
+                    }
+                });
+            });
+
+            $('#modalConfirmacaoEdicao').modal('show');
+        });
+    </script>
+
+</body>
+</html>

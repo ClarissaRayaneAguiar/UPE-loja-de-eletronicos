@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste API</title>
+</head>
+<body>
+    <h3>Teste de Cadastro e Login</h3>
+    <button onclick="testarCadastro()">1. Cadastrar</button>
+    <button onclick="testarLogin()">2. Login</button>
+    <pre id="resultado"></pre>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+
+        function testarCadastro() {
+            fetch(`${API}/usuarios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: "Teste", email: "teste@teste.com", senha: "123456" })
+            })
+            .then(r => r.json())
+            .then(d => document.getElementById('resultado').textContent = JSON.stringify(d, null, 2))
+            .catch(e => document.getElementById('resultado').textContent = "Erro: " + e);
+        }
+
+        function testarLogin() {
+            fetch(`${API}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: "teste@teste.com", senha: "123456" })
+            })
+            .then(r => r.json())
+            .then(d => document.getElementById('resultado').textContent = JSON.stringify(d, null, 2))
+            .catch(e => document.getElementById('resultado').textContent = "Erro: " + e);
+        }
+    </script>
+</body>
+</html>
