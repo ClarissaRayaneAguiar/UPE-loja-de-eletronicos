@@ -70,3 +70,5 @@ def hash_senha(senha: str):
 
 def verificar_senha(senha: str, hash_armazenado: str):
     return bcrypt.checkpw(senha.encode('utf-8'), hash_armazenado.encode('utf-8'))
+
+# force redeploy 2026-06-30 20:51
