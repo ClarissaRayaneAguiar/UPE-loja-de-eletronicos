@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPE Loja de Eletrônicos - Cadastro</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F5F5F5;
+            font-family: sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cadastro-card {
+            border: none;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 460px;
+        }
+        .cadastro-header {
+            background-color: #003399;
+            color: #FFFFFF;
+            border-radius: 12px 12px 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+        .form-label {
+            color: #003399;
+            font-weight: 600;
+        }
+        .form-control:focus {
+            border-color: #CC0000;
+            box-shadow: 0 0 0 0.25rem rgba(204, 0, 0, 0.1);
+        }
+        .btn-upe-primary {
+            background-color: #CC0000;
+            color: #FFFFFF;
+            border: none;
+            font-weight: 600;
+            padding: 12px;
+        }
+        .btn-upe-primary:hover {
+            background-color: #a30000;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 d-flex justify-content-center">
+                <div class="card cadastro-card shadow">
+                    <div class="cadastro-header">
+                        <h3 class="fw-bold mb-1">UPE LOJA DE ELETRÔNICOS</h3>
+                        <p class="mb-0 opacity-75">Criar Conta</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="mensagem-erro" class="alert alert-danger d-none shadow-sm" role="alert"></div>
+
+                        <form id="form-cadastro">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="nome" placeholder="Seu nome completo" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" placeholder="seu@email.com" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="senha" placeholder="Mínimo 6 caracteres" required minlength="6">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="confirmar-senha" class="form-label">Confirmar Senha</label>
+                                <input type="password" class="form-control" id="confirmar-senha" placeholder="Repita a senha" required minlength="6">
+                            </div>
+
+                            <button type="submit" class="btn btn-upe-primary w-100">Cadastrar</button>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <a href="login.html" class="text-decoration-none" style="color: #003399;">Já tem conta? Fazer login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        $('#form-cadastro').on('submit', function(e) {
+            e.preventDefault();
+
+            const nome = $('#nome').val().trim();
+            const email = $('#email').val().trim();
+            const senha = $('#senha').val();
+            const confirmarSenha = $('#confirmar-senha').val();
+
+            if (senha !== confirmarSenha) {
+                $('#mensagem-erro')
+                    .text("As senhas nao coincidem.")
+                    .removeClass('d-none');
+                return;
+            }
+
+            $.ajax({
+                url: `${API_URL}/usuarios`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ nome: nome, email: email, senha: senha }),
+                success: function() {
+                    localStorage.setItem('toast_sucesso', 'Cadastro realizado com sucesso! Faca login.');
+                    window.location.href = 'login.html';
+                },
+                error: function(xhr) {
+                    if (xhr.status === 409) {
+                        $('#mensagem-erro')
+                            .text("Este email ja esta em uso.")
+                            .removeClass('d-none');
+                    } else if (xhr.status === 422) {
+                        $('#mensagem-erro')
+                            .text("Preencha todos os campos corretamente.")
+                            .removeClass('d-none');
+                    } else {
+                        $('#mensagem-erro')
+                            .text("Erro ao cadastrar. Tente novamente.")
+                            .removeClass('d-none');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

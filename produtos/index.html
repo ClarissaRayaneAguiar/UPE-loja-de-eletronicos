@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPE Loja de Eletrônicos - Produtos</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #FFFFFF; color: #333333; font-family: sans-serif; }
+        .custom-navbar { background-color: #003399; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { color: #FFFFFF !important; font-weight: 700; }
+        .nav-link { color: rgba(255, 255, 255, 0.8) !important; font-weight: 500; }
+        .nav-link.active { color: #FFFFFF !important; border-bottom: 2px solid #CC0000; }
+        .main-card { border: none; border-radius: 8px; background-color: #FFFFFF; }
+        .custom-table-head { background-color: #003399; color: #FFFFFF; }
+        .custom-table-head th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+        .table-hover tbody tr:hover { background-color: rgba(0, 51, 153, 0.03); }
+        .btn-upe-primary { background-color: #CC0000; color: #FFFFFF; border: none; font-weight: 600; }
+        .btn-upe-primary:hover { background-color: #a30000; color: #FFFFFF; }
+        .btn-upe-info { background-color: transparent; border: 1px solid #003399; color: #003399; font-weight: 500; }
+        .btn-upe-info:hover { background-color: #003399; color: #FFFFFF; }
+        .btn-upe-danger { background-color: transparent; border: 1px solid #CC0000; color: #CC0000; font-weight: 500; }
+        .btn-upe-danger:hover { background-color: #CC0000; color: #FFFFFF; }
+        .page-link { color: #003399; }
+        .page-link:hover { color: #FFFFFF; background-color: #003399; border-color: #003399; }
+        .page-item.active .page-link { background-color: #CC0000; border-color: #CC0000; color: #FFFFFF; }
+        .page-item.disabled .page-link { color: #6c757d; }
+        .btn-sair {
+            background-color: transparent;
+            border: 1px solid rgba(255,255,255,0.5);
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+        .btn-sair:hover {
+            background-color: #CC0000;
+            border-color: #CC0000;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-5">
+        <div class="container">
+            <a class="navbar-brand" href="#">UPE LOJA DE ELETRÔNICOS</a>
+            <div class="navbar-nav ms-auto align-items-center">
+                <span class="text-white me-3" id="usuario-logado"></span>
+                <a class="nav-link" href="../categorias/index.html">Categorias</a>
+                <a class="nav-link active" href="../produtos/index.html">Produtos</a>
+                <button class="btn btn-sair btn-sm ms-2" id="btn-sair">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold" style="color: #003399;">Gerenciar Produtos</h2>
+            <a href="criar.html" class="btn btn-upe-primary shadow-sm px-4">Novo Produto</a>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="busca-nome" class="form-control" placeholder="Buscar por nome do produto...">
+                    <button class="btn btn-outline-secondary" type="button" id="btn-limpar">Limpar</button>
+                    <button class="btn btn-upe-primary" type="button" id="btn-buscar">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mensagem-erro" class="alert alert-danger d-none shadow-sm mb-3" role="alert"></div>
+
+        <div class="card main-card shadow">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="custom-table-head">
+                        <tr>
+                            <th class="ps-4 py-3">ID</th>
+                            <th class="py-3">Nome</th>
+                            <th class="py-3">Categoria</th>
+                            <th class="py-3">Preço</th>
+                            <th class="py-3">Descrição Técnica</th>
+                            <th class="text-end pe-4 py-3">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-produtos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div id="info-pagina" class="text-muted"></div>
+            <nav>
+                <ul class="pagination mb-0" id="paginacao">
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1" aria-labelledby="modalConfirmacaoExclusaoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalConfirmacaoExclusaoLabel" style="color: #003399;">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="textoModalConfirmacaoExclusao"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-upe-primary" id="btnConfirmarExclusao">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const API_URL = "https://upe-loja-eletronicos.onrender.com/produtos";
+
+        let paginaAtual = 1;
+        let buscaAtual = '';
+
+        $(document).ready(function() {
+            if (!localStorage.getItem('token')) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            $('#usuario-logado').text(localStorage.getItem('usuario_nome') || 'Usuário');
+            carregarProdutos();
+
+            $('#btn-sair').on('click', function() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario_nome');
+                localStorage.removeItem('usuario_email');
+                window.location.href = '../login.html';
+            });
+
+            $('#btn-buscar').on('click', function() {
+                executarBusca();
+            });
+
+            $('#busca-nome').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    executarBusca();
+                }
+            });
+
+            $('#btn-limpar').on('click', function() {
+                $('#busca-nome').val('');
+                buscaAtual = '';
+                paginaAtual = 1;
+                carregarProdutos();
+            });
+        });
+
+        function executarBusca() {
+            buscaAtual = $('#busca-nome').val().trim();
+            paginaAtual = 1;
+            carregarProdutos();
+        }
+
+        function carregarProdutos() {
+            let url = `${API_URL}?page=${paginaAtual}&limit=5`;
+
+            if (buscaAtual) {
+                url += `&nome=${encodeURIComponent(buscaAtual)}`;
+            }
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(resposta) {
+                    let produtos = resposta.data;
+                    let lines = '';
+
+                    if (produtos.length === 0) {
+                        lines = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>`;
+                    } else {
+                        $.each(produtos, function(index, prod) {
+                            let precoFormatado = parseFloat(prod.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            let nomeCategoria = prod.categoria ? prod.categoria.nome : 'Sem categoria';
+                            let nomeEscapado = prod.nome.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+                            lines += `
+                                <tr>
+                                    <td class="ps-4 fw-bold text-muted">#${prod.id}</td>
+                                    <td class="fw-semibold">${prod.nome}</td>
+                                    <td><span class="badge bg-secondary">${nomeCategoria}</span></td>
+                                    <td style="color: #003399;" class="fw-bold">${precoFormatado}</td>
+                                    <td class="text-muted text-truncate" style="max-width: 250px;">${prod.descricao || '-'}</td>
+                                    <td class="text-end pe-4">
+                                        <a href="editar.html?id=${prod.id}" class="btn btn-sm btn-upe-info me-2">Editar</a>
+                                        <button onclick="deletarProduto(${prod.id}, '${nomeEscapado}')" class="btn btn-sm btn-upe-danger">Excluir</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    $('#tabela-produtos').html(lines);
+                    $('#info-pagina').text(`Página ${resposta.page} de ${resposta.pages} (${resposta.total} produtos)`);
+                    montarPaginacao(resposta.page, resposta.pages);
+                },
+                error: function() {
+                    $('#mensagem-erro')
+                        .text("⚠️ Erro: Perda de conexão com o servidor de dados.")
+                        .removeClass('d-none');
+                }
+            });
+        }
+
+        function montarPaginacao(page, pages) {
+            let html = '';
+
+            html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">`;
+            html += `<a class="page-link" href="#" onclick="mudarPagina(${page - 1}); return false;">Anterior</a>`;
+            html += `</li>`;
+
+            for (let i = 1; i <= pages; i++) {
+                html += `<li class="page-item ${i === page ? 'active' : ''}">`;
+                html += `<a class="page-link" href="#" onclick="mudarPagina(${i}); return false;">${i}</a>`;
+                html += `</li>`;
+            }
+
+            html += `<li class="page-item ${page === pages ? 'disabled' : ''}">`;
+            html += `<a class="page-link" href="#" onclick="mudarPagina(${page + 1}); return false;">Próximo</a>`;
+            html += `</li>`;
+
+            $('#paginacao').html(html);
+        }
+
+        function mudarPagina(page) {
+            paginaAtual = page;
+            carregarProdutos();
+        }
+
+        function deletarProduto(id, nome) {
+            $('#textoModalConfirmacaoExclusao').text(`Tem certeza que deseja excluir o produto "${nome}"? Esta ação não pode ser desfeita.`);
+
+            $('#btnConfirmarExclusao').off('click').on('click', function() {
+                $('#modalConfirmacaoExclusao').modal('hide');
+
+                $.ajax({
+                    url: `${API_URL}/${id}`,
+                    type: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    success: function() { 
+                        carregarProdutos(); 
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            $('#mensagem-erro')
+                                .text("⚠️ Sessão expirada. Redirecionando para a página de login...")
+                                .removeClass('d-none');
+                            setTimeout(function() {
+                                window.location.href = '../login.html';
+                            }, 3000);
+                        } else if (xhr.status === 404) {
+                            $('#mensagem-erro').text("⚠️ Erro 404: O produto selecionado já não existe no servidor.").removeClass('d-none');
+                        } else {
+                            $('#mensagem-erro').text("⚠️ Erro ao tentar excluir o produto do sistema.").removeClass('d-none');
+                        }
+                    }
+                });
+            });
+
+            $('#modalConfirmacaoExclusao').modal('show');
+        }
+    </script>
+</body>
+</html>
