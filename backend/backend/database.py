@@ -14,15 +14,20 @@ def criar_tabelas():
     conn = conectar()
     cursor = conn.cursor()
 
+    # ATENÇÃO: Isso recria as tabelas do zero (apaga dados existentes no Render)
+    cursor.execute("DROP TABLE IF EXISTS produtos")
+    cursor.execute("DROP TABLE IF EXISTS categorias")
+    cursor.execute("DROP TABLE IF EXISTS usuarios")
+
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS categorias (
+        CREATE TABLE categorias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL
         )
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS produtos (
+        CREATE TABLE produtos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
             categoria_id INTEGER NOT NULL,
@@ -33,7 +38,7 @@ def criar_tabelas():
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usuarios (
+        CREATE TABLE usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
@@ -41,21 +46,16 @@ def criar_tabelas():
         )
     """)
 
-    cursor.execute("SELECT COUNT(*) FROM categorias")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO categorias (nome) VALUES ('Processador')")
-        cursor.execute("INSERT INTO categorias (nome) VALUES ('Placa de Video')")
-        cursor.execute("INSERT INTO categorias (nome) VALUES ('Armazenamento')")
+    # Dados iniciais
+    cursor.execute("INSERT INTO categorias (nome) VALUES ('Processador')")
+    cursor.execute("INSERT INTO categorias (nome) VALUES ('Placa de Video')")
+    cursor.execute("INSERT INTO categorias (nome) VALUES ('Armazenamento')")
 
-    cursor.execute("SELECT COUNT(*) FROM produtos")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO produtos (nome, categoria_id, preco, descricao) VALUES ('Ryzen 7 7800X3D', 1, 2999.90, 'Processador AMD 8 nucleos')")
-        cursor.execute("INSERT INTO produtos (nome, categoria_id, preco, descricao) VALUES ('RTX 4070', 2, 4200.00, 'Placa de video NVIDIA 12GB')")
+    cursor.execute("INSERT INTO produtos (nome, categoria_id, preco, descricao) VALUES ('Ryzen 7 7800X3D', 1, 2999.90, 'Processador AMD 8 nucleos')")
+    cursor.execute("INSERT INTO produtos (nome, categoria_id, preco, descricao) VALUES ('RTX 4070', 2, 4200.00, 'Placa de video NVIDIA 12GB')")
 
-    cursor.execute("SELECT COUNT(*) FROM usuarios")
-    if cursor.fetchone()[0] == 0:
-        hash_admin = bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        cursor.execute("INSERT INTO usuarios (nome, email, senha_hash) VALUES ('Administrador', 'admin@upe.com', ?)", (hash_admin,))
+    hash_admin = bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    cursor.execute("INSERT INTO usuarios (nome, email, senha_hash) VALUES ('Administrador', 'admin@upe.com', ?)", (hash_admin,))
 
     conn.commit()
     conn.close()
