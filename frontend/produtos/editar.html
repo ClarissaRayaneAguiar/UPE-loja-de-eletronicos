@@ -34,6 +34,8 @@
 </head>
 <body>
 
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
+
     <nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-5">
         <div class="container">
             <a class="navbar-brand" href="#">UPE LOJA DE ELETRÔNICOS</a>
@@ -49,8 +51,6 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-7">
-                <div id="mensagem-erro" class="alert alert-danger d-none shadow-sm mb-3" role="alert"></div>
-
                 <div class="card form-card shadow">
                     <div class="card-body p-4">
                         <h4 class="mb-4 fw-bold text-center" style="color: #003399;">Editar Produto</h4>
@@ -118,6 +118,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const produtoId = urlParams.get('id');
 
+       
+        function mostrarToast(mensagem, variante = 'info') {
+            const idToast = 'toast-' + Date.now();
+            let classeBg = 'bg-info text-white';
+            
+            if (variante === 'success') classeBg = 'bg-success text-white';
+            if (variante === 'danger') classeBg = 'bg-danger text-white';
+            if (variante === 'warning') classeBg = 'bg-warning text-dark';
+
+            const htmlToast = `
+                <div id="${idToast}" class="toast align-items-center ${classeBg} border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                    <div class="d-flex">
+                        <div class="toast-body fw-medium">
+                            ${mensagem}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            $('.toast-container').append(htmlToast);
+            
+            const elementoToast = document.getElementById(idToast);
+            const bootstrapToast = new bootstrap.Toast(elementoToast);
+            bootstrapToast.show();
+
+            
+            elementoToast.addEventListener('hidden.bs.toast', function () {
+                elementoToast.remove();
+            });
+        }
+
         $(document).ready(function() {
 
             if (!localStorage.getItem('token')) {
@@ -135,9 +167,7 @@
             });
 
             if (!produtoId) {
-                $('#mensagem-erro')
-                    .text("⚠️ Erro: Nenhum ID de produto fornecido na URL.")
-                    .removeClass('d-none');
+                mostrarToast("⚠️ Erro: Nenhum ID de produto fornecido na URL.", "danger");
                 return;
             }
 
@@ -146,7 +176,6 @@
                 type: 'GET',
 
                 success: function(categorias) {
-
                     let options = '';
 
                     $.each(categorias, function(index, cat) {
@@ -154,14 +183,11 @@
                     });
 
                     $('#categoria_id').html(options);
-
                     carregarDadosProduto();
                 },
 
                 error: function() {
-                    $('#mensagem-erro')
-                        .text("⚠️ Falha ao buscar lista de categorias no servidor.")
-                        .removeClass('d-none');
+                    mostrarToast("⚠️ Falha ao buscar lista de categorias no servidor.", "danger");
                 }
             });
 
@@ -186,7 +212,6 @@
         });
 
         function carregarDadosProduto() {
-
             $.ajax({
                 url: `${API_PRODUTOS}/${produtoId}`,
                 type: 'GET',
@@ -200,35 +225,28 @@
                     precoFormatado = precoFormatado.replace('.', ',');
                     precoFormatado = precoFormatado.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                     $('#preco').val(precoFormatado);
+                    
+                    mostrarToast("ℹ️ Dados do produto carregados.", "info");
                 },
 
                 error: function(xhr) {
-
                     if (xhr.status === 404) {
-                        $('#mensagem-erro')
-                            .text("⚠️ Erro 404: O produto não foi localizado no banco de dados.")
-                            .removeClass('d-none');
+                        mostrarToast("⚠️ Erro 404: O produto não foi localizado no banco de dados.", "danger");
                     } else {
-                        $('#mensagem-erro')
-                            .text("⚠️ Erro ao carregar os dados cadastrais do produto.")
-                            .removeClass('d-none');
+                        mostrarToast("⚠️ Erro ao carregar os dados cadastrais do produto.", "danger");
                     }
                 }
             });
         }
 
-        
         $('#form-editar').on('submit', function(e) {
-
             e.preventDefault();
 
             const nomeProduto = $('#nome').val().trim();
             const descricao = $('#descricao').val().trim();
 
             if (descricao.length < 10) {
-                $('#mensagem-erro')
-                    .text("⚠️ A descrição deve possuir no mínimo 10 caracteres.")
-                    .removeClass('d-none');
+                mostrarToast("⚠️ A descrição deve possuir no mínimo 10 caracteres.", "warning");
                 return;
             }
 
@@ -237,19 +255,13 @@
             const precoFormatado = parseFloat(precoLimpo);
 
             if (!precoLimpo || isNaN(precoFormatado) || precoFormatado <= 0) {
-                $('#mensagem-erro')
-                    .text("⚠️ Preço inválido! O valor deve ser maior que zero.")
-                    .removeClass('d-none');
+                mostrarToast("⚠️ Preço inválido! O valor deve ser maior que zero.", "warning");
                 return;
             }
 
-            
             $('#textoModalConfirmacao').text(`Tem certeza que deseja alterar os dados críticos do produto "${nomeProduto}"? Esta ação não pode ser desfeita.`);
 
-            
             $('#btnSalvarConfirmado').off('click').on('click', function() {
-                
-                
                 $('#modalConfirmacao').modal('hide');
 
                 const dadosAtualizados = {
@@ -259,7 +271,6 @@
                     descricao: descricao
                 };
 
-               
                 $.ajax({
                     url: `${API_PRODUTOS}/${produtoId}`,
                     type: 'PUT',
@@ -270,39 +281,31 @@
                     data: JSON.stringify(dadosAtualizados),
 
                     success: function() {
-                        window.location.href = "index.html";
+                        mostrarToast("✅ Produto atualizado com sucesso!", "success");
+                        setTimeout(function() {
+                            window.location.href = "index.html";
+                        }, 1500); 
                     },
 
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            $('#mensagem-erro')
-                                .text("⚠️ Sessão expirada. Redirecionando para a página de login...")
-                                .removeClass('d-none');
-                            
+                            mostrarToast("⚠️ Sessão expirada. Redirecionando para a página de login...", "danger");
                             setTimeout(function() {
                                 window.location.href = '../login.html';
                             }, 3000);
                         } else if (xhr.status === 422) {
-                            $('#mensagem-erro')
-                                .text("⚠️ Erro 422: O servidor rejeitou os dados. Verifique o formato inserido.")
-                                .removeClass('d-none');
+                            mostrarToast("⚠️ Erro 422: O servidor rejeitou os dados. Verifique o formato inserido.", "danger");
                         } else if (xhr.status === 404) {
-                            $('#mensagem-erro')
-                                .text("⚠️ Erro 404: Não foi possível atualizar. Produto inexistente.")
-                                .removeClass('d-none');
+                            mostrarToast("⚠️ Erro 404: Não foi possível atualizar. Produto inexistente.", "danger");
                         } else {
-                            $('#mensagem-erro')
-                                .text("⚠️ Falha na requisição PUT ao tentar salvar alterações.")
-                                .removeClass('d-none');
+                            mostrarToast("⚠️ Falha na requisição PUT ao tentar salvar alterações.", "danger");
                         }
                     }
                 });
             });
 
-           
             $('#modalConfirmacao').modal('show');
         });
     </script>
-
 </body>
 </html>
