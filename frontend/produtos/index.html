@@ -42,6 +42,8 @@
 </head>
 <body>
 
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
+
     <nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-5">
         <div class="container">
             <a class="navbar-brand" href="#">UPE LOJA DE ELETRÔNICOS</a>
@@ -71,8 +73,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="mensagem-erro" class="alert alert-danger d-none shadow-sm mb-3" role="alert"></div>
 
         <div class="card main-card shadow">
             <div class="card-body p-0">
@@ -128,6 +128,37 @@
         let paginaAtual = 1;
         let buscaAtual = '';
 
+        
+        function mostrarToast(mensagem, variante = 'info') {
+            const idToast = 'toast-' + Date.now();
+            let classeBg = 'bg-info text-white';
+            
+            if (variante === 'success') classeBg = 'bg-success text-white';
+            if (variante === 'danger') classeBg = 'bg-danger text-white';
+            if (variante === 'warning') classeBg = 'bg-warning text-dark';
+
+            const htmlToast = `
+                <div id="${idToast}" class="toast align-items-center ${classeBg} border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                    <div class="d-flex">
+                        <div class="toast-body fw-medium">
+                            ${mensagem}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            $('.toast-container').append(htmlToast);
+            
+            const elementoToast = document.getElementById(idToast);
+            const bootstrapToast = new bootstrap.Toast(elementoToast);
+            bootstrapToast.show();
+
+            elementoToast.addEventListener('hidden.bs.toast', function () {
+                elementoToast.remove();
+            });
+        }
+
         $(document).ready(function() {
             if (!localStorage.getItem('token')) {
                 window.location.href = '../login.html';
@@ -159,13 +190,17 @@
                 buscaAtual = '';
                 paginaAtual = 1;
                 carregarProdutos();
+                mostrarToast("ℹ️ Filtros de busca limpos.", "info");
             });
         });
 
-        function executarBusca() {
+        function ejecutarBusca() {
             buscaAtual = $('#busca-nome').val().trim();
             paginaAtual = 1;
             carregarProdutos();
+            if (buscaAtual) {
+                mostrarToast(`🔍 Buscando por: "${buscaAtual}"`, "info");
+            }
         }
 
         function carregarProdutos() {
@@ -184,6 +219,7 @@
 
                     if (produtos.length === 0) {
                         lines = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>`;
+                        mostrarToast("⚠️ Nenhum produto foi retornado na listagem.", "warning");
                     } else {
                         $.each(produtos, function(index, prod) {
                             let precoFormatado = parseFloat(prod.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -211,9 +247,7 @@
                     montarPaginacao(resposta.page, resposta.pages);
                 },
                 error: function() {
-                    $('#mensagem-erro')
-                        .text("⚠️ Erro: Perda de conexão com o servidor de dados.")
-                        .removeClass('d-none');
+                    mostrarToast("⚠️ Erro: Perda de conexão com o servidor de dados.", "danger");
                 }
             });
         }
@@ -256,20 +290,19 @@
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
                     success: function() { 
+                        mostrarToast("✅ Produto excluído com sucesso!", "success");
                         carregarProdutos(); 
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            $('#mensagem-erro')
-                                .text("⚠️ Sessão expirada. Redirecionando para a página de login...")
-                                .removeClass('d-none');
+                            mostrarToast("⚠️ Sessão expirada. Redirecionando para a página de login...", "danger");
                             setTimeout(function() {
                                 window.location.href = '../login.html';
                             }, 3000);
                         } else if (xhr.status === 404) {
-                            $('#mensagem-erro').text("⚠️ Erro 404: O produto selecionado já não existe no servidor.").removeClass('d-none');
+                            mostrarToast("⚠️ Erro 404: O produto selecionado já não existe no servidor.", "danger");
                         } else {
-                            $('#mensagem-erro').text("⚠️ Erro ao tentar excluir o produto do sistema.").removeClass('d-none');
+                            mostrarToast("⚠️ Erro ao tentar excluir o produto do sistema.", "danger");
                         }
                     }
                 });
