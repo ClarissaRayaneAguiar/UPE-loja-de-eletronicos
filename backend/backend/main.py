@@ -1,15 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from datetime import datetime
+import hashlib
+import os
 
 from routes.produtos import router as produtos_router
 from routes.categorias import router as categorias_router
 from routes.usuarios import router as usuarios_router
-from auth import autenticar_usuario, criar_token
-from database import criar_tabelas
+from auth import autenticar_usuario, criar_token, SECRET_KEY
+from database import criar_tabelas, DB_PATH
 
 app = FastAPI()
 
+# 🔁 Força recriação do banco de dados no Render (apaga o antigo)
+if os.path.exists(DB_PATH):
+    os.remove(DB_PATH)
 criar_tabelas()
 
 app.add_middleware(
@@ -61,4 +67,12 @@ def login(body: dict):
 def home():
     return {
         "mensagem": "API da loja funcionando"
+    }
+
+@app.get("/debug")
+def debug_info():
+    key_hash = hashlib.sha256(SECRET_KEY.encode()).hexdigest()[:10]
+    return {
+        "key_hash": key_hash,
+        "server_time": datetime.utcnow().isoformat()
     }
